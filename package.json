@@ -1,6 +1,6 @@
 {
   "name": "@project-gitgone/node",
-  "version": "26.2.4",
+  "version": "26.2.6",
   "description": "GitGone Node.js library",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
