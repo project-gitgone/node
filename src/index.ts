@@ -19,24 +19,30 @@ interface SecretResponse {
   };
 }
 
-export class GitGone {
-  private _env: Record<string, unknown> = {};
+export class GitGone<T extends Record<string, any> = Record<string, string>> {
+  private _env: T = {} as T;
   private _isInitialized = false;
 
-  async config<T = Record<string, string>>(options: GitGoneOptions<T> = {}): Promise<T> {
+  async config(options: GitGoneOptions<T> = {}): Promise<T> {
     const token = options.token || process.env.GITGONE_TOKEN;
     const serverUrl =
-      options.serverUrl || process.env.GITGONE_SERVER_URL || "http://localhost:3333";
+      options.serverUrl ||
+      process.env.GITGONE_SERVER_URL ||
+      "http://localhost:3333";
     const populate = options.populateProcessEnv ?? true;
     const override = options.override ?? false;
 
     if (!token) {
-      throw new Error("[GitGone] Missing token. Set GITGONE_TOKEN or pass it to config().");
+      throw new Error(
+        "[GitGone] Missing token. Set GITGONE_TOKEN or pass it to config().",
+      );
     }
 
     const [, tokenSecret] = token.split(".");
     if (!tokenSecret) {
-      throw new Error('[GitGone] Invalid token format. Expected "ptok_ID.Secret"');
+      throw new Error(
+        '[GitGone] Invalid token format. Expected "ptok_ID.Secret"',
+      );
     }
 
     try {
@@ -48,8 +54,13 @@ export class GitGone {
       });
 
       if (!response.ok) {
-        const errorData = (await response.json().catch(() => ({}))) as Record<string, unknown>;
-        throw new Error((errorData.message as string) || (response.statusText as string));
+        const errorData = (await response.json().catch(() => ({}))) as Record<
+          string,
+          unknown
+        >;
+        throw new Error(
+          (errorData.message as string) || (response.statusText as string),
+        );
       }
 
       const data = (await response.json()) as SecretResponse;
@@ -72,22 +83,24 @@ export class GitGone {
 
       if (options.validator) {
         const validated = await options.validator(fetchedEnv);
-        this._env = validated as Record<string, unknown>;
+        this._env = validated;
       } else {
-        this._env = fetchedEnv;
+        this._env = fetchedEnv as unknown as T;
       }
 
       this._isInitialized = true;
-      return this._env as T;
+      return this._env;
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       throw new Error(`[GitGone] Initialization failed: ${message}`);
     }
   }
 
-  get(key: string): unknown {
+  get<K extends keyof T>(key: K): T[K] {
     if (!this._isInitialized) {
-      console.warn(`[GitGone] Warning: Accessing "${key}" before config().`);
+      console.warn(
+        `[GitGone] Warning: Accessing "${String(key)}" before config().`,
+      );
     }
     return this._env[key];
   }
@@ -134,7 +147,11 @@ export class GitGone {
     }
 
     const key = crypto.createHash("sha256").update(secret).digest();
-    const decipher = crypto.createDecipheriv("aes-256-gcm", key, Buffer.from(ivHex, "hex"));
+    const decipher = crypto.createDecipheriv(
+      "aes-256-gcm",
+      key,
+      Buffer.from(ivHex, "hex"),
+    );
 
     decipher.setAuthTag(Buffer.from(authTagHex, "hex"));
 
@@ -143,7 +160,7 @@ export class GitGone {
     return decrypted;
   }
 
-  get parsed() {
+  get parsed(): T {
     return this._env;
   }
 }
