@@ -30,6 +30,19 @@
     "lint": "biome check src tests",
     "format": "biome format --write src tests"
   },
+  "keywords": [
+    "node",
+    "library",
+    "gitgone",
+    "project",
+    "management",
+    "developer",
+    "workflow"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/project-gitgone/node.git"
+  },
   "author": "Théo Lagache <theo@lagache.dev>",
   "license": "MIT",
   "devDependencies": {
